@@ -36,7 +36,7 @@ namespace SchoolManagementSystemApi.Services
             message.Subject = subject;
             message.Body = new TextPart("plain") { Text = body };
 
-            using var client = new SmtpClient();
+            using var client = new MailKit.Net.Smtp.SmtpClient();
             client.Connect(_configuration["Email:SmtpHost"], int.Parse(_configuration["Email:SmtpPort"]), true);
             client.Authenticate(_configuration["Email:Username"], _configuration["Email:Password"]);
             client.Send(message);

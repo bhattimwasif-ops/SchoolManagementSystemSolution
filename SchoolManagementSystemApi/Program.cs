@@ -1,4 +1,5 @@
 using Hangfire;
+using Hangfire.PostgreSql;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.EntityFrameworkCore;
@@ -13,8 +14,22 @@ var builder = WebApplication.CreateBuilder(args);
 builder.Services.AddControllers();
 builder.Services.AddEndpointsApiExplorer();
 builder.Services.AddSwaggerGen();
+// DbContext configuration
+var dbProvider = builder.Configuration["DatabaseProvider"];
+
 builder.Services.AddDbContext<ApplicationDbContext>(options =>
-    options.UseSqlServer(builder.Configuration.GetConnectionString("DefaultConnection")));
+{
+    if (dbProvider == "Postgres")
+    {
+        options.UseNpgsql(builder.Configuration.GetConnectionString("PostgresConnection"));
+    }
+    else
+    {
+        options.UseSqlServer(builder.Configuration.GetConnectionString("DefaultConnection"));
+    }
+    // Add resiliency (cool feature)
+   // options.EnableRetryOnFailure(maxRetryCount: 5, maxRetryDelay: TimeSpan.FromSeconds(30), null);
+});
 
 
 builder.Services.AddIdentity<IdentityUser, IdentityRole>()
@@ -22,7 +37,17 @@ builder.Services.AddIdentity<IdentityUser, IdentityRole>()
     .AddDefaultTokenProviders();
 builder.Services.AddSingleton<NotificationService>();
 
-builder.Services.AddHangfire(config => config.UseSqlServerStorage(builder.Configuration.GetConnectionString("DefaultConnection")));
+// Hangfire configuration
+if (dbProvider == "Postgres")
+{
+    builder.Services.AddHangfire(config =>
+        config.UsePostgreSqlStorage(builder.Configuration.GetConnectionString("PostgresConnection")));
+}
+else
+{
+    builder.Services.AddHangfire(config =>
+        config.UseSqlServerStorage(builder.Configuration.GetConnectionString("HangfireConnection")));
+}
 builder.Services.AddHangfireServer();
 
 builder.Services.AddAuthentication(options =>
@@ -42,7 +67,6 @@ builder.Services.AddAuthentication(options =>
         IssuerSigningKey = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(builder.Configuration["Jwt:Key"]))
     };
 });
-RecurringJob.AddOrUpdate<ReportService>(x => x.GenerateMonthlyReport(), "0 0 1 * *"); // 1st of month
 builder.Services.AddCors(options =>
 {
     options.AddPolicy("AllowReact", builder =>
@@ -66,6 +90,10 @@ using (var scope = app.Services.CreateScope())
         if (!await roleManager.RoleExistsAsync(role))
             await roleManager.CreateAsync(new IdentityRole(role));
     }
+
+    // Schedule recurring job using dependency injection
+    var recurringJobManager = scope.ServiceProvider.GetRequiredService<IRecurringJobManager>();
+    recurringJobManager.AddOrUpdate<ReportService>("generate-monthly-report", x => x.GenerateMonthlyReport(), Cron.Monthly());
 }
 
 // Configure middleware
