@@ -23,7 +23,7 @@ namespace SchoolManagementSystemApi.Controllers
         public async Task<IActionResult> GetStudents(int classId)
         {
             var students = await _context.Students
-                .Where(s => s.Class == $"Class {classId}")
+                .Where(s => s.Class.Id == classId)
                 .ToListAsync();
             return Ok(students);
         }

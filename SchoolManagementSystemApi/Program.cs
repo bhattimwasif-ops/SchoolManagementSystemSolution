@@ -105,7 +105,14 @@ if (app.Environment.IsDevelopment())
 
 app.UseHttpsRedirection();
 app.UseAuthentication();
-app.UseAuthorization(); 
+app.UseAuthorization();
+// Enable Hangfire dashboard
+app.UseHangfireDashboard("/hangfire", new DashboardOptions
+{
+    // Restrict to local requests by default for security
+    Authorization = new[] { new HangfireAuthorizationFilter() }
+});
+
 app.MapControllers();
 
 app.Run();

@@ -1,0 +1,59 @@
+﻿using System.ComponentModel.DataAnnotations;
+using Microsoft.AspNetCore.Authorization;
+using Microsoft.AspNetCore.Http;
+using Microsoft.AspNetCore.Mvc;
+using Microsoft.EntityFrameworkCore;
+using SchoolManagementSystemApi.Data;
+using SchoolManagementSystemApi.Models;
+
+namespace SchoolManagementSystemApi.Controllers
+{
+    [Route("api/[controller]")]
+    [ApiController]
+    [Authorize]
+    public class StudentsController : ControllerBase
+    {
+        private readonly ApplicationDbContext _context;
+
+        public StudentsController(ApplicationDbContext context)
+        {
+            _context = context;
+        }
+
+        [HttpPost]
+        public async Task<IActionResult> CreateStudent([FromBody] StudentDto studentDto)
+        {
+            if (!ModelState.IsValid)
+            {
+                return BadRequest(ModelState);
+            }
+
+            if (!await _context.Classes.AnyAsync(c => c.Id == studentDto.ClassId))
+            {
+                return BadRequest("Invalid ClassId");
+            }
+
+            var student = new Student
+            {
+                Name = studentDto.Name,
+                ClassId = studentDto.ClassId,
+                ParentEmail = studentDto.ParentEmail,
+                ParentPhone = studentDto.ParentPhone
+            };
+
+            _context.Students.Add(student);
+            await _context.SaveChangesAsync();
+
+            return Ok();
+        }
+    }
+
+    public class StudentDto
+    {        
+        public int Id { get; set; }
+        public string Name { get; set; } = null!;
+        public int ClassId { get; set; }
+        public string ParentEmail { get; set; } = null!;
+        public string ParentPhone { get; set; } = null!;
+    }
+}
