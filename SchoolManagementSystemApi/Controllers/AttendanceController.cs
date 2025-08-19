@@ -1,4 +1,5 @@
-﻿using Microsoft.AspNetCore.Authorization;
+﻿using System.Text.Json;
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 using SchoolManagementSystemApi.Data;
@@ -47,5 +48,39 @@ namespace SchoolManagementSystemApi.Controllers
             }
             return Ok(new { Message = "Attendance marked successfully" });
         }
+
+        [HttpPost("manual-mark")]
+        public async Task<IActionResult> MarkAttendance([FromBody] IEnumerable<AttendanceDto> attendances)
+        {
+            if (attendances == null || !attendances.Any())
+            {
+                return BadRequest("No attendance data provided.");
+            }
+
+            foreach (var attendance in attendances)
+            {
+                if (!await _context.Students.AnyAsync(s => s.Id == attendance.StudentId))
+                {
+                    return BadRequest($"Invalid StudentId: {attendance.StudentId}");
+                }
+
+                var attendanceRecord = new Attendance
+                {
+                    StudentId = attendance.StudentId,
+                    Date = DateTime.Parse(attendance.Date),
+                    Status = attendance.Status
+                };
+                _context.Attendances.Add(attendanceRecord);
+            }
+
+            await _context.SaveChangesAsync();
+            return Ok();
+        }
+    }
+    public class AttendanceDto
+    {
+        public int StudentId { get; set; }
+        public string Date { get; set; } = null!;
+        public string Status { get; set; } = null!;
     }
 }

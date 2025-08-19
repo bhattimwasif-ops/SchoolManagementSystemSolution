@@ -46,6 +46,7 @@ namespace SchoolManagementSystemApi.Controllers
 
             return Ok();
         }
+      
     }
     public class ClassDto
     {        

@@ -1,4 +1,6 @@
-﻿using System.ComponentModel.DataAnnotations;
+﻿using System;
+using System.ComponentModel.DataAnnotations;
+using System.Text.Json;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
@@ -45,6 +47,17 @@ namespace SchoolManagementSystemApi.Controllers
             await _context.SaveChangesAsync();
 
             return Ok();
+        }
+
+        [HttpGet("{classId}/students")]
+        public async Task<IActionResult> GetStudentsByClass(int classId)
+        {
+            var students = await _context.Students
+                .Where(s => s.ClassId == classId)
+                .Select(s => new { s.Id, s.Name })
+                .ToListAsync();
+
+            return Ok(students);
         }
     }
 
