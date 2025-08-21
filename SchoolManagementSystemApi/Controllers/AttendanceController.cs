@@ -56,24 +56,32 @@ namespace SchoolManagementSystemApi.Controllers
             {
                 return BadRequest("No attendance data provided.");
             }
-
-            foreach (var attendance in attendances)
+            try
             {
-                if (!await _context.Students.AnyAsync(s => s.Id == attendance.StudentId))
+                foreach (var attendance in attendances)
                 {
-                    return BadRequest($"Invalid StudentId: {attendance.StudentId}");
+                    if (!await _context.Students.AnyAsync(s => s.Id == attendance.StudentId))
+                    {
+                        return BadRequest($"Invalid StudentId: {attendance.StudentId}");
+                    }
+
+                    var attendanceRecord = new Attendance
+                    {
+                        StudentId = attendance.StudentId,
+                        Date = DateTime.Parse(attendance.Date, null, System.Globalization.DateTimeStyles.RoundtripKind).ToUniversalTime(),
+                        Status = attendance.Status
+                    };
+                    _context.Attendances.Add(attendanceRecord);
                 }
 
-                var attendanceRecord = new Attendance
-                {
-                    StudentId = attendance.StudentId,
-                    Date = DateTime.Parse(attendance.Date),
-                    Status = attendance.Status
-                };
-                _context.Attendances.Add(attendanceRecord);
+                await _context.SaveChangesAsync();
             }
+            catch (Exception ex)
+            {
 
-            await _context.SaveChangesAsync();
+                throw;
+            }
+           
             return Ok();
         }
     }
