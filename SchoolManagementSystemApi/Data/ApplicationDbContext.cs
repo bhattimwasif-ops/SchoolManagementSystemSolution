@@ -14,7 +14,8 @@ namespace SchoolManagementSystemApi.Data
         public DbSet<Class> Classes { get; set; }
         public DbSet<Student> Students { get; set; }
         public DbSet<Attendance> Attendances { get; set; }
-
+        public DbSet<Test> Tests { get; set; }
+        public DbSet<StudentTest> StudentTests { get; set; }
         protected override void OnModelCreating(ModelBuilder modelBuilder)
         {
             base.OnModelCreating(modelBuilder);
@@ -39,7 +40,16 @@ namespace SchoolManagementSystemApi.Data
                 new Class { Id = 11, ClassName = "Grad 9", Section = "A", Teacher = "Sir Saqib" },
                 new Class { Id = 12, ClassName = "Grad 10", Section = "A", Teacher = "Miss Aroosa" }
             );
-        }
 
+            modelBuilder.Entity<Test>()
+            .HasMany(t => t.StudentTests)
+            .WithOne(st => st.Test)
+            .HasForeignKey(st => st.TestId);
+
+            modelBuilder.Entity<Student>()
+                .HasMany(s => s.StudentTests)
+                .WithOne(st => st.Student)
+                .HasForeignKey(st => st.StudentId);
+        }
     }
 }
