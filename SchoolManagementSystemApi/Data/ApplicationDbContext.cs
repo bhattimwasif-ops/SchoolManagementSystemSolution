@@ -41,15 +41,19 @@ namespace SchoolManagementSystemApi.Data
                 new Class { Id = 12, ClassName = "Grad 10", Section = "A", Teacher = "Miss Aroosa" }
             );
 
+            // Configure Test entity
             modelBuilder.Entity<Test>()
-            .HasMany(t => t.StudentTests)
-            .WithOne(st => st.Test)
-            .HasForeignKey(st => st.TestId);
+                .HasMany(t => t.StudentTests)
+                .WithOne(st => st.Test)
+                .HasForeignKey(st => st.TestId)
+                .OnDelete(DeleteBehavior.Restrict); // Change to Restrict to avoid cascade
 
+            // Configure Student entity
             modelBuilder.Entity<Student>()
                 .HasMany(s => s.StudentTests)
                 .WithOne(st => st.Student)
-                .HasForeignKey(st => st.StudentId);
+                .HasForeignKey(st => st.StudentId)
+                .OnDelete(DeleteBehavior.Restrict); // Change to Restrict to avoid cascade
         }
     }
 }
