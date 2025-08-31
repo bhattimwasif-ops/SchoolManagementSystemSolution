@@ -22,6 +22,15 @@ namespace SchoolManagementSystemApi.Controllers
             _context = context;
         }
 
+        [HttpGet]
+        public async Task<IActionResult> GetStudents()
+        {
+            var students = await _context.Students
+                .Select(s => new { s.Id, s.Name, s.ClassId })
+                .ToListAsync();
+            return Ok(students);
+        }
+
         [HttpPost]
         public async Task<IActionResult> CreateStudent([FromBody] StudentDto studentDto)
         {
@@ -58,7 +67,8 @@ namespace SchoolManagementSystemApi.Controllers
                 .ToListAsync();
 
             return Ok(students);
-        }
+        }        
+
     }
 
     public class StudentDto

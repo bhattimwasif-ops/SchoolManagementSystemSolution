@@ -42,18 +42,17 @@ namespace SchoolManagementSystemApi.Data
             );
 
             // Configure Test entity
-            modelBuilder.Entity<Test>()
-                .HasMany(t => t.StudentTests)
-                .WithOne(st => st.Test)
-                .HasForeignKey(st => st.TestId)
-                .OnDelete(DeleteBehavior.Restrict); // Change to Restrict to avoid cascade
+                    modelBuilder.Entity<Test>()
+              .HasMany(t => t.StudentTests)
+              .WithOne(st => st.Test)
+              .HasForeignKey(st => st.TestId)
+              .OnDelete(DeleteBehavior.Restrict);
 
-            // Configure Student entity
             modelBuilder.Entity<Student>()
                 .HasMany(s => s.StudentTests)
                 .WithOne(st => st.Student)
                 .HasForeignKey(st => st.StudentId)
-                .OnDelete(DeleteBehavior.Restrict); // Change to Restrict to avoid cascade
+                .OnDelete(DeleteBehavior.Restrict);
         }
     }
 }

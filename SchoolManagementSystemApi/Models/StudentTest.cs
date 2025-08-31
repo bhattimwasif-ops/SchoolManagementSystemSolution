@@ -13,6 +13,8 @@ namespace SchoolManagementSystemApi.Models
         public int ObtainedMarks { get; set; }
         public decimal Percentage { get; set; }
         public string Grade { get; set; } = null!;
+        public DateTime UpdatedAt { get; set; }
+        public string UpdatedBy { get; set; } = null!; // New field for user ID or name
         public Student Student { get; set; } = null!;
         public Test Test { get; set; } = null!;
     }
