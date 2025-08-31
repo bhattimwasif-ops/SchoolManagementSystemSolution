@@ -25,6 +25,15 @@ public class TestController : ControllerBase
         return Ok(tests);
     }
 
+    [HttpGet("{testId}/marks")]
+    public async Task<IActionResult> GetMarksForTest(int testId, int? studentId)
+    {
+        var query = _context.StudentTests.Where(st => st.TestId == testId);
+        if (studentId.HasValue) query = query.Where(st => st.StudentId == studentId.Value);
+        var marks = await query.Select(st => new { st.Id, st.Student.Name, st.Subject, st.ObtainedMarks, st.TotalMarks, st.Percentage, st.Grade }).ToListAsync();
+        return Ok(marks);
+    }
+
     [HttpPost("create")]
     public async Task<IActionResult> CreateTest([FromBody] TestDto testDto)
     {

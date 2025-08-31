@@ -59,6 +59,26 @@ namespace SchoolManagementSystemApi.Controllers
             return Ok(reports);
         }
 
+        [HttpGet("{classId}/marks")]
+        public async Task<IActionResult> GetMarksForClass(int classId, int? testId, int? studentId)
+        {
+            var query = _context.StudentTests.Include(st => st.Test).Include(st => st.Student).AsQueryable();
+            if (testId.HasValue) query = query.Where(st => st.TestId == testId.Value);
+            if (studentId.HasValue) query = query.Where(st => st.StudentId == studentId.Value);
+            var results = await query.Select(st => new
+            {
+                st.Id,
+                TestName = st.Test.Name,
+                StudentName = st.Student.Name,
+                st.Subject,
+                st.TotalMarks,
+                st.ObtainedMarks,
+                st.Percentage,
+                st.Grade
+            }).ToListAsync();
+            return Ok(results);
+        }
+
         [HttpGet("{studentId}/reports")]
         public async Task<IActionResult> GetStudentReports(int studentId)
         {
