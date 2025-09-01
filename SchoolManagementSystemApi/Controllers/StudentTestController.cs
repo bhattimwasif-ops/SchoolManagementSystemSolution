@@ -118,7 +118,16 @@ namespace SchoolManagementSystemApi.Controllers
             await _context.SaveChangesAsync();
             return Ok();
         }
+        [HttpDelete("{id}")]
+        public async Task<IActionResult> DeleteMarks(int id)
+        {
+            var studentTest = await _context.StudentTests.FindAsync(id);
+            if (studentTest == null) return NotFound();
 
+            _context.StudentTests.Remove(studentTest);
+            await _context.SaveChangesAsync();
+            return Ok();
+        }
         private string AssignGrade(decimal percentage)
         {
             return percentage >= 90 ? "A+" :

@@ -64,6 +64,7 @@ public class TestController : ControllerBase
     [HttpPost("add-marks")]
     public async Task<IActionResult> AddStudentMarks([FromBody] List<StudentTestDto> studentTests)
     {
+        var userId = User.Identity?.Name ?? "Unknown"; // Get user ID from JWT or fallback
         foreach (var st in studentTests)
         {
             var studentTest = new StudentTest
@@ -74,7 +75,9 @@ public class TestController : ControllerBase
                 TotalMarks = st.TotalMarks,
                 ObtainedMarks = st.ObtainedMarks,
                 Percentage = (decimal)st.ObtainedMarks / st.TotalMarks * 100,
-                Grade = AssignGrade((decimal)st.ObtainedMarks / st.TotalMarks * 100)
+                Grade = AssignGrade((decimal)st.ObtainedMarks / st.TotalMarks * 100),
+                UpdatedBy = userId
+
             };
             _context.StudentTests.Add(studentTest);
         }
