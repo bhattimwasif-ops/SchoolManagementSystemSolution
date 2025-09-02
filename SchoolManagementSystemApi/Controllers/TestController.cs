@@ -64,9 +64,30 @@ public class TestController : ControllerBase
     [HttpPost("add-marks")]
     public async Task<IActionResult> AddStudentMarks([FromBody] List<StudentTestDto> studentTests)
     {
-        var userId = User.Identity?.Name ?? "Unknown"; // Get user ID from JWT or fallback
+        var userId = User.Identity?.Name ?? "Unknown";
+
+        var existingTests = _context.StudentTests
+            .Where(x => studentTests.Select(st => st.StudentId).Contains(x.StudentId)
+                     && studentTests.Select(st => st.TestId).Contains(x.TestId)
+                     && studentTests.Select(st => st.Subject).Contains(x.Subject))
+            .ToList();
+
+        var skippedSubjects = new List<string>();
+
         foreach (var st in studentTests)
         {
+            bool alreadyExists = existingTests.Any(x =>
+                x.StudentId == st.StudentId &&
+                x.TestId == st.TestId &&
+                x.Subject == st.Subject);
+
+            if (alreadyExists)
+            {
+                skippedSubjects.Add(st.Subject);
+                continue;
+            }
+
+            var percentage = (decimal)st.ObtainedMarks / st.TotalMarks * 100;
             var studentTest = new StudentTest
             {
                 StudentId = st.StudentId,
@@ -74,16 +95,23 @@ public class TestController : ControllerBase
                 Subject = st.Subject,
                 TotalMarks = st.TotalMarks,
                 ObtainedMarks = st.ObtainedMarks,
-                Percentage = (decimal)st.ObtainedMarks / st.TotalMarks * 100,
-                Grade = AssignGrade((decimal)st.ObtainedMarks / st.TotalMarks * 100),
+                Percentage = percentage,
+                Grade = AssignGrade(percentage),
                 UpdatedBy = userId
-
             };
+
             _context.StudentTests.Add(studentTest);
         }
+
         await _context.SaveChangesAsync();
-        return Ok();
+
+        return Ok(new
+        {
+            Message = "Marks processed.",
+            SkippedSubjects = skippedSubjects
+        });
     }
+
     [HttpGet("{studentId}/reports")]
     public async Task<IActionResult> GetStudentReports(int studentId)
     {

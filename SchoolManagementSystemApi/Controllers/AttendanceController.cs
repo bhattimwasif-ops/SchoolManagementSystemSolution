@@ -53,36 +53,79 @@ namespace SchoolManagementSystemApi.Controllers
         public async Task<IActionResult> MarkAttendance([FromBody] IEnumerable<AttendanceDto> attendances)
         {
             if (attendances == null || !attendances.Any())
-            {
                 return BadRequest("No attendance data provided.");
-            }
+
             try
             {
-                foreach (var attendance in attendances)
-                {
-                    if (!await _context.Students.AnyAsync(s => s.Id == attendance.StudentId))
+                var normalizedAttendances = attendances
+                    .Select(a => new Attendance
                     {
-                        return BadRequest($"Invalid StudentId: {attendance.StudentId}");
-                    }
+                        StudentId = a.StudentId,
+                        Date = DateTime.Parse(a.Date, null, System.Globalization.DateTimeStyles.RoundtripKind).Date,
+                        Status = a.Status
+                    })
+                    .ToList();
 
-                    var attendanceRecord = new Attendance
-                    {
-                        StudentId = attendance.StudentId,
-                        Date = DateTime.Parse(attendance.Date, null, System.Globalization.DateTimeStyles.RoundtripKind).ToUniversalTime(),
-                        Status = attendance.Status
-                    };
-                    _context.Attendances.Add(attendanceRecord);
-                }
+                var studentIds = normalizedAttendances.Select(a => a.StudentId).Distinct().ToList();
+                var dates = normalizedAttendances.Select(a => a.Date).Distinct().ToList();
+
+                // Delete existing records for same students and dates
+                var existingRecords = await _context.Attendances
+                    .Where(a => studentIds.Contains(a.StudentId) && dates.Contains(a.Date))
+                    .ToListAsync();
+
+                _context.Attendances.RemoveRange(existingRecords);
+
+                // Add new records
+                _context.Attendances.AddRange(normalizedAttendances);
 
                 await _context.SaveChangesAsync();
+                return Ok("Attendance updated successfully.");
+            }
+            catch (Exception)
+            {
+                return StatusCode(500, "An error occurred while processing attendance.");
+            }
+        }
+
+        [HttpGet("class/{classId}")]
+        public async Task<IActionResult> GetClassAttendance(int classId)
+        {
+            try
+            {
+                var attendanceData = await _context.Attendances
+                .Where(a => a.Student.ClassId == classId)
+                .Include(a => a.Student)
+                .ThenInclude(s => s.Class)
+                .ToListAsync();
+
+                if (attendanceData == null || !attendanceData.Any())
+                {
+                    return NotFound(new { message = "No attendance data found for this class." });
+                }
+
+                // Perform grouping and projection client-side
+                var latestAttendance = attendanceData
+                    .GroupBy(a => a.StudentId)
+                    .Select(g => g.OrderByDescending(a => a.Date).First())
+                    .Select(a => new
+                    {
+                        Id = a.Student.Id,
+                        Name = a.Student.Name,
+                        //RollNumber = a.Student.RollNumber,
+                        Status = a.Status,
+                        Date = a.Date
+                    })
+                    .ToList();
+
+                return Ok(latestAttendance);
+
             }
             catch (Exception ex)
             {
 
                 throw;
             }
-           
-            return Ok();
         }
     }
     public class AttendanceDto
