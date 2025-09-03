@@ -26,7 +26,7 @@ namespace SchoolManagementSystemApi.Controllers
         public async Task<IActionResult> GetStudents()
         {
             var students = await _context.Students
-                .Select(s => new { s.Id, s.Name, s.ClassId })
+                //.Select(s => new { s.Id, s.Name, s.ClassId })
                 .ToListAsync();
             return Ok(students);
         }
@@ -49,7 +49,17 @@ namespace SchoolManagementSystemApi.Controllers
                 Name = studentDto.Name,
                 ClassId = studentDto.ClassId,
                 ParentEmail = studentDto.ParentEmail,
-                ParentPhone = studentDto.ParentPhone
+                ParentPhone = studentDto.ParentPhone,
+                GuardianOccupation = studentDto.GuardianOccupation,
+                GuardianName = studentDto.GuardianName,
+                Address = studentDto.Address,
+                AdmissionDate = studentDto.AdmissionDate,
+                RollNo = studentDto.RollNo,
+                CreateBy = User?.Identity?.Name,
+                Image = studentDto.Image,
+                CreatedOn = DateTime.Now,
+                FatherOccupation = studentDto.FatherOccupation,
+                MotherName = studentDto.MotherName,                
             };
 
             _context.Students.Add(student);
@@ -93,13 +103,16 @@ namespace SchoolManagementSystemApi.Controllers
             student.ClassId = studentDto.ClassId;
             student.ParentEmail = studentDto.ParentEmail;
             student.ParentPhone = studentDto.ParentPhone;
-            //student.Image = studentDto.Image;
-            //student.Address = studentDto.Address;
-            //student.RollNo = studentDto.RollNo;
-            //student.FatherOccupation = studentDto.FatherOccupation;
-            //student.GuardianName = studentDto.GuardianName;
-            //student.GuardianOccupation = studentDto.GuardianOccupation;
-            //student.MotherName = studentDto.MotherName;
+            student.Image = studentDto.Image;
+            student.Address = studentDto.Address;
+            student.RollNo = studentDto.RollNo;
+            student.FatherOccupation = studentDto.FatherOccupation;
+            student.GuardianName = studentDto.GuardianName;
+            student.GuardianOccupation = studentDto.GuardianOccupation;
+            student.MotherName = studentDto.MotherName;
+            student.AdmissionDate = studentDto.AdmissionDate;
+            student.ModifiedBy = User?.Identity?.Name;
+            student.ModifiedOn = DateTime.Now;
 
             _context.Students.Update(student);
             await _context.SaveChangesAsync();
@@ -137,5 +150,10 @@ namespace SchoolManagementSystemApi.Controllers
         public string GuardianName { get; set; } = null!;
         public string GuardianOccupation { get; set; } = null!;
         public string MotherName { get; set; } = null!;
+        public DateTime? AdmissionDate { get; set; }
+        public string? CreateBy { get; set; }
+        public DateTime CreatedOn { get; set; }
+        public string? ModifiedBy { get; set; }
+        public DateTime? ModifiedOn { get; set; }
     }
 }

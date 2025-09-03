@@ -88,44 +88,101 @@ namespace SchoolManagementSystemApi.Controllers
             }
         }
 
+        //[HttpGet("class/{classId}")]
+        //public async Task<IActionResult> GetClassAttendance(int classId)
+        //{
+        //    try
+        //    {
+        //        var attendanceData = await _context.Attendances
+        //        .Where(a => a.Student.ClassId == classId)
+        //        .Include(a => a.Student)
+        //        .ThenInclude(s => s.Class)
+        //        .ToListAsync();
+
+        //        if (attendanceData == null || !attendanceData.Any())
+        //        {
+        //            return NotFound(new { message = "No attendance data found for this class." });
+        //        }
+
+        //        // Perform grouping and projection client-side
+        //        var latestAttendance = attendanceData
+        //            .GroupBy(a => a.StudentId)
+        //            .Select(g => g.OrderByDescending(a => a.Date).First())
+        //            .Select(a => new
+        //            {
+        //                Id = a.Student.Id,
+        //                Name = a.Student.Name,
+        //                //RollNumber = a.Student.RollNumber,
+        //                Status = a.Status,
+        //                Date = a.Date
+        //            })
+        //            .ToList();
+
+        //        return Ok(latestAttendance);
+
+        //    }
+        //    catch (Exception ex)
+        //    {
+
+        //        throw;
+        //    }
+        //}
         [HttpGet("class/{classId}")]
-        public async Task<IActionResult> GetClassAttendance(int classId)
+        public async Task<IActionResult> GetClassAttendance(int classId, DateTime? fromDate = null, DateTime? toDate = null)
         {
-            try
+            var query = _context.Attendances
+                .Where(a => a.Student.ClassId == classId);
+
+            if (fromDate.HasValue)
             {
-                var attendanceData = await _context.Attendances
-                .Where(a => a.Student.ClassId == classId)
+                query = query.Where(a => a.Date >= fromDate.Value);
+            }
+            if (toDate.HasValue)
+            {
+                query = query.Where(a => a.Date <= toDate.Value);
+            }
+
+            var attendanceData = await query
                 .Include(a => a.Student)
                 .ThenInclude(s => s.Class)
                 .ToListAsync();
 
-                if (attendanceData == null || !attendanceData.Any())
-                {
-                    return NotFound(new { message = "No attendance data found for this class." });
-                }
-
-                // Perform grouping and projection client-side
-                var latestAttendance = attendanceData
-                    .GroupBy(a => a.StudentId)
-                    .Select(g => g.OrderByDescending(a => a.Date).First())
-                    .Select(a => new
-                    {
-                        Id = a.Student.Id,
-                        Name = a.Student.Name,
-                        //RollNumber = a.Student.RollNumber,
-                        Status = a.Status,
-                        Date = a.Date
-                    })
-                    .ToList();
-
-                return Ok(latestAttendance);
-
-            }
-            catch (Exception ex)
+            if (attendanceData == null || !attendanceData.Any())
             {
-
-                throw;
+                return NotFound(new { message = "No attendance data found for this class." });
             }
+
+            // Group by student ID and get the latest status per student
+            var latestAttendance = attendanceData
+                .GroupBy(a => a.StudentId)
+                .Select(g => g.OrderByDescending(a => a.Date).First())
+                .Select(a => new
+                {
+                    Id = a.Student.Id,
+                    Name = a.Student.Name,
+                    RollNumber = a.Student.RollNo,
+                    Status = a.Status,
+                    Date = a.Date
+                })
+                .ToList();
+
+            // Calculate totals
+            var totalPresent = latestAttendance.Count(a => a.Status == "Present");
+            var totalAbsent = latestAttendance.Count(a => a.Status == "Absent");
+            var totalLate = latestAttendance.Count(a => a.Status == "Late");
+            var absentStudents = latestAttendance.Where(a => a.Status == "Absent").Select(a => a.Name).ToList();
+
+            return Ok(new
+            {
+                Attendance = latestAttendance,
+                Totals = new
+                {
+                    Present = totalPresent,
+                    Absent = totalAbsent,
+                    Late = totalLate
+                },
+                AbsentStudents = absentStudents
+            });
         }
     }
     public class AttendanceDto
