@@ -67,7 +67,59 @@ namespace SchoolManagementSystemApi.Controllers
                 .ToListAsync();
 
             return Ok(students);
-        }        
+        }
+
+        [HttpGet("{id}")]
+        public async Task<IActionResult> GetStudentById(int id)
+        {
+            var student = await _context.Students.FindAsync(id);
+            if (student == null)
+                return NotFound("Student not found");
+
+            return Ok(student);
+        }
+
+        [HttpPut("{id}")]
+        public async Task<IActionResult> UpdateStudent(int id, [FromBody] StudentDto studentDto)
+        {
+            if (id != studentDto.Id)
+                return BadRequest("Student ID mismatch");
+
+            var student = await _context.Students.FindAsync(id);
+            if (student == null)
+                return NotFound("Student not found");
+
+            student.Name = studentDto.Name;
+            student.ClassId = studentDto.ClassId;
+            student.ParentEmail = studentDto.ParentEmail;
+            student.ParentPhone = studentDto.ParentPhone;
+            //student.Image = studentDto.Image;
+            //student.Address = studentDto.Address;
+            //student.RollNo = studentDto.RollNo;
+            //student.FatherOccupation = studentDto.FatherOccupation;
+            //student.GuardianName = studentDto.GuardianName;
+            //student.GuardianOccupation = studentDto.GuardianOccupation;
+            //student.MotherName = studentDto.MotherName;
+
+            _context.Students.Update(student);
+            await _context.SaveChangesAsync();
+
+            return Ok("Student updated successfully");
+        }
+
+        [HttpDelete("{id}")]
+        public async Task<IActionResult> DeleteStudent(int id)
+        {
+            var student = await _context.Students.FindAsync(id);
+            if (student == null)
+                return NotFound("Student not found");
+
+            _context.Students.Remove(student);
+            await _context.SaveChangesAsync();
+
+            return Ok("Student deleted successfully");
+        }
+
 
     }
 
@@ -78,5 +130,12 @@ namespace SchoolManagementSystemApi.Controllers
         public int ClassId { get; set; }
         public string ParentEmail { get; set; } = null!;
         public string ParentPhone { get; set; } = null!;
+        public string Image { get; set; } = null!;
+        public string Address { get; set; } = null!;
+        public string RollNo { get; set; } = null!;
+        public string FatherOccupation { get; set; } = null!;
+        public string GuardianName { get; set; } = null!;
+        public string GuardianOccupation { get; set; } = null!;
+        public string MotherName { get; set; } = null!;
     }
 }
