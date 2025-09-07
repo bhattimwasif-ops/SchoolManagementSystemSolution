@@ -59,7 +59,8 @@ namespace SchoolManagementSystemApi.Controllers
                 Image = studentDto.Image,
                 CreatedOn = DateTime.Now,
                 FatherOccupation = studentDto.FatherOccupation,
-                MotherName = studentDto.MotherName,                
+                MotherName = studentDto.MotherName,
+                DateOfBirth = studentDto.DateOfBirth,
             };
 
             _context.Students.Add(student);
@@ -113,6 +114,7 @@ namespace SchoolManagementSystemApi.Controllers
             student.AdmissionDate = studentDto.AdmissionDate;
             student.ModifiedBy = User?.Identity?.Name;
             student.ModifiedOn = DateTime.Now;
+            student.DateOfBirth = studentDto.DateOfBirth;
 
             _context.Students.Update(student);
             await _context.SaveChangesAsync();
@@ -155,5 +157,7 @@ namespace SchoolManagementSystemApi.Controllers
         public DateTime CreatedOn { get; set; }
         public string? ModifiedBy { get; set; }
         public DateTime? ModifiedOn { get; set; }
+        public DateTime? DateOfBirth { get; set; }
+
     }
 }

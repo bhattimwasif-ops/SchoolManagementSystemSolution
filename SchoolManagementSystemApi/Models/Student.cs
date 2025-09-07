@@ -52,6 +52,8 @@ namespace SchoolManagementSystemApi.Models
         public string? CreateBy { get; set; }
 
         public DateTime CreatedOn { get; set; }
+        public DateTime? DateOfBirth { get; set; }
+
 
         [StringLength(100)]
         public string? ModifiedBy { get; set; }
