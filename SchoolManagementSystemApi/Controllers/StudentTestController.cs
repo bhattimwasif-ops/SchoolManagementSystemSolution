@@ -136,5 +136,63 @@ namespace SchoolManagementSystemApi.Controllers
                    percentage >= 60 ? "C" :
                    percentage >= 50 ? "D" : "F";
         }
+
+        [HttpGet("{studentId}/result")]
+        public async Task<IActionResult> GetStudentResult(int studentId)
+        {
+            var studentTests = await _context.StudentTests
+                .Where(st => st.StudentId == studentId)
+                .Include(st => st.Test)
+                .Include(st => st.Student)
+                .ToListAsync();
+
+            if (!studentTests.Any())
+            {
+                return NotFound(new { message = "No result data found for this student." });
+            }
+
+            var subjects = studentTests.Select(st => new[]
+            {
+                //st.Test.Subject,
+                //st.Test.TotalMarks,
+                st.ObtainedMarks,
+                //GetGrade(st.ObtainedMarks, st.Test.TotalMarks),
+                //GetPercentile(st.ObtainedMarks, st.Test.TotalMarks),
+                //st.ObtainedMarks >= (st.Test.TotalMarks * 0.33) ? "PASS" : "FAIL"
+            }).ToList();
+
+            var totalMarks = "490";//studentTests.Sum(st => st.Test.);
+            var obtainedMarks = studentTests.Sum(st => st.ObtainedMarks);
+            var totalStatus = "Pass";//obtainedMarks >= (totalMarks * 0.33) ? "PASS" : "FAIL";
+
+            var student = await _context.Students
+                .Where(s => s.Id == studentId)
+                .Select(s => new
+                {
+                    s.Name,
+                    s.RollNo,
+                    FatherName = s.GuardianName ?? "N/A", // Adjust model if needed
+                    //FatherRollNo = s.FatherRollNo ?? "N/A", // Adjust model if needed
+                    //DateOfBirth = s.DateOfBirth?.ToString("dd/MM/yyyy") ?? "N/A",
+                    //Institution = s.Class?.InstitutionName ?? "N/A" // Adjust model if needed
+                })
+                .FirstOrDefaultAsync();
+
+            if (student == null) return NotFound();
+
+            return Ok(new
+            {
+                name = student.Name,
+                rollNo = student.RollNo,
+                fatherName = student.FatherName,
+                //fatherRollNo = student.FatherRollNo,
+                //dateOfBirth = student.DateOfBirth,
+                //institution = student.Institution,
+                subjects = subjects,
+                totalMarks = totalMarks,
+                totalStatus = $"{totalStatus} {obtainedMarks}/{totalMarks}",
+                resultDeclaredOn = DateTime.Now.ToString("dd MMM yyyy")
+            });
+        }
     }
 }

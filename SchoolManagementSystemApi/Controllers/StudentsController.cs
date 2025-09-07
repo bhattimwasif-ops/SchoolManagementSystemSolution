@@ -134,8 +134,6 @@ namespace SchoolManagementSystemApi.Controllers
 
             return Ok("Student deleted successfully");
         }
-
-
     }
 
     public class StudentDto
