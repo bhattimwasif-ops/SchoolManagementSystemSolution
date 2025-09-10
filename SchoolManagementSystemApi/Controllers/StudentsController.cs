@@ -79,7 +79,7 @@ namespace SchoolManagementSystemApi.Controllers
 
             return Ok(students);
         }
-
+        
         [HttpGet("{id}")]
         public async Task<IActionResult> GetStudentById(int id)
         {
