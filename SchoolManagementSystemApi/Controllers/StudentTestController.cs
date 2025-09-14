@@ -158,7 +158,7 @@ namespace SchoolManagementSystemApi.Controllers
                 st.ObtainedMarks,
                 Grade = GetGrade(st.ObtainedMarks, st.TotalMarks),
                 Percentile = GetPercentile(st.ObtainedMarks, st.TotalMarks),
-                Status = st.ObtainedMarks >= (st.TotalMarks * 0.33) ? "PASS" : "FAIL"
+                Status = st.ObtainedMarks >= (st.TotalMarks * 0.50) ? "PASS" : "FAIL"
             }).ToList();
 
             var totalMarks = studentTests.Sum(st => st.TotalMarks);
