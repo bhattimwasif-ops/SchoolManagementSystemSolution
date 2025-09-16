@@ -97,7 +97,8 @@ public class TestController : ControllerBase
                 ObtainedMarks = st.ObtainedMarks,
                 Percentage = percentage,
                 Grade = AssignGrade(percentage),
-                UpdatedBy = userId
+                UpdatedBy = userId,
+                UpdatedAt = DateTime.Now
             };
 
             _context.StudentTests.Add(studentTest);

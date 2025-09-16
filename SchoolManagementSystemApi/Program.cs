@@ -25,7 +25,7 @@ builder.Services.AddDbContext<ApplicationDbContext>(options =>
     }
     else
     {
-        options.UseSqlServer(builder.Configuration.GetConnectionString("SmarterApNetConnectionString"));
+        options.UseSqlServer(builder.Configuration.GetConnectionString("DefaultConnection"));
     }
     // Add resiliency (cool feature)
    // options.EnableRetryOnFailure(maxRetryCount: 5, maxRetryDelay: TimeSpan.FromSeconds(30), null);
@@ -71,7 +71,7 @@ builder.Services.AddCors(options =>
 {
     options.AddPolicy("AllowReact", builder =>
     {
-        builder.WithOrigins("http://localhost:5173", "http://localhost:3000")
+        builder.WithOrigins("http://localhost:5173", "http://localhost:3000", "http://localhost:33000")
                .AllowAnyHeader()
                .AllowAnyMethod();
     });
