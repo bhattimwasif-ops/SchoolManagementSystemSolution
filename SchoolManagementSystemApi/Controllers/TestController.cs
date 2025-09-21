@@ -113,6 +113,63 @@ public class TestController : ControllerBase
         });
     }
 
+    [HttpPost("add-marks-row")]
+    public async Task<IActionResult> AddStudentMarksByRow([FromBody] StudentTestDto studentTests)
+    {
+        var userId = User.Identity?.Name ?? "Unknown";
+
+        var existingTests = _context.StudentTests
+            .Where(x => studentTests.StudentId == x.StudentId//Select(st => st.StudentId).Contains(x.StudentId)
+                     && studentTests.TestId == x.TestId
+                     && studentTests.Subject.Contains(x.Subject))
+            .ToList();
+
+        var skippedSubjects = new List<string>();
+
+        //foreach (var st in studentTests)
+        //{
+        bool alreadyExists = existingTests.Any(x =>
+            x.StudentId == studentTests.StudentId &&
+            x.TestId == studentTests.TestId &&
+            x.Subject == studentTests.Subject);
+
+        if (alreadyExists)
+        {
+            skippedSubjects.Add(studentTests.Subject);
+            return Ok(new
+            {
+                Message = "Marks not added.",
+                SkippedSubjects = skippedSubjects
+            });
+        }
+
+        var percentage = (decimal)studentTests.ObtainedMarks / studentTests.TotalMarks * 100;
+        var studentTest = new StudentTest
+        {
+            StudentId = studentTests.StudentId,
+            TestId = studentTests.TestId,
+            Subject = studentTests.Subject,
+            TotalMarks = studentTests.TotalMarks,
+            ObtainedMarks = studentTests.ObtainedMarks,
+            Percentage = percentage,
+            Grade = AssignGrade(percentage),
+            UpdatedBy = userId,
+            UpdatedAt = DateTime.Now
+        };
+
+        _context.StudentTests.Add(studentTest);
+        //}
+
+        await _context.SaveChangesAsync();
+
+        return Ok(new
+        {
+            Message = "Marks added.",
+            SkippedSubjects = skippedSubjects
+        });
+    }
+
+
     [HttpGet("{studentId}/reports")]
     public async Task<IActionResult> GetStudentReports(int studentId)
     {
@@ -171,6 +228,69 @@ public class TestController : ControllerBase
                percentage >= 70 ? "B" :
                percentage >= 60 ? "C" :
                percentage >= 50 ? "D" : "F";
+    }
+    [HttpGet("{testId}/results")]
+    public async Task<IActionResult> GetTestResults(int testId)
+    {
+        var studentTests = await _context.StudentTests
+            .Where(st => st.TestId == testId)
+            .Include(st => st.Test)
+            .Include(st => st.Student)
+            .ToListAsync();
+
+        if (!studentTests.Any())
+        {
+            return NotFound(new { message = "No results found for this test." });
+        }
+
+        var results = studentTests
+            .GroupBy(st => st.StudentId)
+            .Select(g => new
+            {
+                studentId = g.Key,
+                student = g.First().Student,
+                subjects = g.Select(st => new
+                {
+                    subject = st.Subject,
+                    totalMarks = st.TotalMarks,
+                    obtainedMarks = st.ObtainedMarks,
+                    grade = GetGrade(st.ObtainedMarks, st.TotalMarks),
+                    percentile = GetPercentile(st.ObtainedMarks, st.TotalMarks),
+                    status = st.ObtainedMarks >= (st.TotalMarks * 0.50) ? "PASS" : "FAIL"
+                }).ToList(),
+                totalMarks = g.Sum(st => st.TotalMarks),
+                obtainedMarks = g.Sum(st => st.ObtainedMarks),
+                totalStatus = g.Sum(st => st.ObtainedMarks) >= (g.Sum(st => st.TotalMarks) * 0.50) ? "PASS" : "FAIL"
+            })
+            .Select(r => new
+            {
+                studentId = r.studentId,
+                name = r.student.Name,
+                rollNo = r.student.RollNo,
+                fatherName = r.student.GuardianName ?? "N/A",
+                fatherRollNo =  "N/A",
+                dateOfBirth = r.student.DateOfBirth?.ToString("dd/MM/yyyy") ?? "N/A",
+                institution =  "N/A",
+                subjects = r.subjects,
+                totalMarks = r.totalMarks,
+                totalStatus = $"{r.totalStatus} {r.obtainedMarks}/{r.totalMarks}",
+                resultDeclaredOn = DateTime.Now.ToString("dd MMM yyyy")
+            })
+            .ToList();
+
+        return Ok(results);
+    }
+
+    private string GetGrade(int obtained, int total)
+    {
+        var percentage = (obtained * 100) / total;
+        return percentage >= 90 ? "A+" : percentage >= 80 ? "A" : percentage >= 70 ? "B" : percentage >= 60 ? "C" : "F";
+    }
+
+    private string GetPercentile(int obtained, int total)
+    {
+        var percentage = (obtained * 100) / total;
+        return $"{percentage:0.00}";
     }
 }
 

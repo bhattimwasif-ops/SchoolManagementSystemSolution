@@ -163,7 +163,8 @@ namespace SchoolManagementSystemApi.Controllers
 
             var totalMarks = studentTests.Sum(st => st.TotalMarks);
             var obtainedMarks = studentTests.Sum(st => st.ObtainedMarks);
-            var totalStatus = obtainedMarks >= (totalMarks * 0.50) ? "PASS" : "FAIL";
+
+            var totalStatus = subjects.Any(x => x.Status == "FAIL") ? "FAIL" : "PASS";// obtainedMarks >= (totalMarks * 0.50) ? "PASS" : "FAIL";
 
             var student = await _context.Students
                 .Where(s => s.Id == studentId)
@@ -213,7 +214,7 @@ namespace SchoolManagementSystemApi.Controllers
         private string GetGrade(int obtained, int total)
         {
             var percentage = (obtained * 100) / total;
-            return percentage >= 90 ? "A+" : percentage >= 80 ? "A" : percentage >= 70 ? "B" : percentage >= 60 ? "C" : "F";
+            return percentage >= 90 ? "A+" : percentage >= 80 ? "A" : percentage >= 70 ? "B" : percentage >= 60 ? "C" : percentage >= 50 ? "D" : "F";
         }
 
         private string GetPercentile(int obtained, int total)
