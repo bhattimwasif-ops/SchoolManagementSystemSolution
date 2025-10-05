@@ -259,7 +259,7 @@ public class TestController : ControllerBase
                     status = st.ObtainedMarks >= (st.TotalMarks * 0.50) ? "PASS" : "FAIL"
                 }).ToList(),
                 totalMarks = g.Sum(st => st.TotalMarks),
-                obtainedMarks = g.Sum(st => st.ObtainedMarks),
+                obtainedMarks = g.Sum(st => st.ObtainedMarks), // Preserve obtainedMarks
                 totalStatus = g.Sum(st => st.ObtainedMarks) >= (g.Sum(st => st.TotalMarks) * 0.50) ? "PASS" : "FAIL"
             })
             .Select(r => new
@@ -268,14 +268,16 @@ public class TestController : ControllerBase
                 name = r.student.Name,
                 rollNo = r.student.RollNo,
                 fatherName = r.student.GuardianName ?? "N/A",
-                fatherRollNo =  "N/A",
+                fatherRollNo = "N/A",
                 dateOfBirth = r.student.DateOfBirth?.ToString("dd/MM/yyyy") ?? "N/A",
-                institution =  "N/A",
+                institution = "N/A",
                 subjects = r.subjects,
                 totalMarks = r.totalMarks,
+                obtainedMarks = r.obtainedMarks, // Include obtainedMarks in the final object
                 totalStatus = $"{r.totalStatus} {r.obtainedMarks}/{r.totalMarks}",
                 resultDeclaredOn = DateTime.Now.ToString("dd MMM yyyy")
             })
+            .OrderByDescending(r => r.obtainedMarks) // Sort by obtainedMarks
             .ToList();
 
         return Ok(results);

@@ -25,8 +25,25 @@ namespace SchoolManagementSystemApi.Controllers
         [HttpGet]
         public async Task<IActionResult> GetStudents()
         {
-            var students = await _context.Students
-                //.Select(s => new { s.Id, s.Name, s.ClassId })
+            var students = await _context.Students.Include(x => x.Class)
+                .Select(s => new
+                {
+                    s.Id,
+                    s.Name,
+                    s.Class.ClassName,
+                    s.RollNo,
+                    s.ParentPhone,
+                    s.ParentEmail,
+                    s.MotherName,
+                    s.GuardianName,
+                    s.Address,
+                    s.AdmissionDate,
+                    s.DateOfBirth,
+                    s.Image,
+                    s.FatherOccupation,
+                    s.GuardianOccupation,
+                    s.ClassId
+                })
                 .ToListAsync();
             return Ok(students);
         }
